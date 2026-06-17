@@ -212,8 +212,10 @@ if __name__ == "__main__":
                             seed=seed,
                             verbose=True
                         )
+                        os.makedirs(f"pymoo\\dataset\\mood_train_dataset\\ref_dataset_{i}", exist_ok=True)
 
-                        np.savetxt(rf"pymoo\\dataset\\mood_train_dataset\\ref_dataset_{i}\\pareto_front_{algo.__class__.__name__.lower()}_seed_{seed}.txt", res.F, fmt="%.6f")
+
+                        np.savetxt(f"pymoo\\dataset\\mood_train_dataset\\ref_dataset_{i}\\pareto_front_{algo.__class__.__name__.lower()}_seed_{seed}.txt", res.F, fmt="%.6f")
 
 
         print("Lancement pour l'ACO ...")
@@ -244,7 +246,7 @@ if __name__ == "__main__":
              make_negative_pareto(pareto_file)
 
 
-        print("\nTous les algorithmes ont été exécutés avec succès. concaténation des front de pareto...")
+        print("\nTous les algorithmes ont été exécutés avec succès. concaténation des fronts de pareto...")
 
 
         for i in [0, 1, 2, 3, 4]:
@@ -305,64 +307,82 @@ if __name__ == "__main__":
         for algo_name, algo_factory in algorithms.items():
             
             for i in range(5):
-                    for seed in [1, 2, 3, 4, 5,6,7,8,9,10]:
-                        algo = algo_factory()
+                    for nb_items in [100,300,500]:
+                        for seed in [1, 2, 3, 4, 5,6,7,8,9,10]:
+                            algo = algo_factory()
 
-                        print(f"\n=== {algo.__class__.__name__} | instance {i} ==")
+                            print(f"\n=== {algo.__class__.__name__} | instance {i} {nb_items} items ==")
 
-                        problem = MOMDKP(f"pymoo\\dataset\\mood_train_dataset\\dataset_{i}_instance_100_items_3_objectifs.txt")
-
-
-                        res = minimize(
-                            problem,
-                            algo,
-                            ('n_gen', 300),
-                            seed=seed,
-                            verbose=True
-                        )
-
-                        np.savetxt(rf"pymoo\\dataset\\mood_train_dataset\\ref_dataset_{i}\\pareto_front_{algo.__class__.__name__.lower()}_seed_{seed}.txt", res.F, fmt="%.6f")
+                            problem = MOMDKP(f"pymoo\\dataset\\mood_val_dataset\\dataset_{i}_instance_{nb_items}_items_3_objectifs.txt")
 
 
+                            res = minimize(
+                                problem,
+                                algo,
+                                ('n_gen', 300),
+                                seed=seed,
+                                verbose=True
+                            )
+                            os.makedirs(f"pymoo\\dataset\\mood_val_dataset\\ref_dataset_{i}_{nb_items}_items", exist_ok=True)
+
+
+                            np.savetxt(f"pymoo\\dataset\\mood_val_dataset\\ref_dataset_{i}_{nb_items}_items\\pareto_front_{algo.__class__.__name__.lower()}_seed_{seed}.txt", res.F, fmt="%.6f")
+
+        
         print("Lancement pour l'ACO ...")
 
-        for dataset in datasets:
-                    run_aco("WeightACO_100items",args=[dataset])
+        for nb_items in [100,300,500]:
+            for i in range(5):
+                    run_aco(f"WeightACO_eval_{nb_items}items",args=[f"pymoo\\dataset\\mood_val_dataset\\dataset_{i}_instance_{nb_items}_items_3_objectifs.txt"])
 
 
+        
         #extraire les sets de pareto à partir des résultats de l'ACO
+        
 
-        aco_results=[("results_train_dataset_0.txt", "pymoo\\dataset\\mood_train_dataset\\ref_dataset_0"),
-                        ("results_train_dataset_1.txt", "pymoo\\dataset\\mood_train_dataset\\ref_dataset_1"),
-                        ("results_train_dataset_2.txt", "pymoo\\dataset\\mood_train_dataset\\ref_dataset_2"),
-                        ("results_train_dataset_3.txt", "pymoo\\dataset\\mood_train_dataset\\ref_dataset_3"),
-                        ("results_train_dataset_4.txt", "pymoo\\dataset\\mood_train_dataset\\ref_dataset_4")]
+        val_aco_results=[("results_val_dataset_0_100_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_0_100_items"),
+                 ("results_val_dataset_1_100_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_1_100_items"),
+                 ("results_val_dataset_2_100_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_2_100_items"),
+                 ("results_val_dataset_3_100_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_3_100_items"),
+                 ("results_val_dataset_4_100_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_4_100_items"),
+                 ("results_val_dataset_0_300_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_0_300_items"),
+                 ("results_val_dataset_1_300_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_1_300_items"),
+                 ("results_val_dataset_2_300_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_2_300_items"),
+                 ("results_val_dataset_3_300_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_3_300_items"),
+                 ("results_val_dataset_4_300_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_4_300_items"),
+                 ("results_val_dataset_0_500_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_0_500_items"),
+                 ("results_val_dataset_1_500_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_1_500_items"),
+                 ("results_val_dataset_2_500_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_2_500_items"),
+                 ("results_val_dataset_3_500_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_3_500_items"),
+                 ("results_val_dataset_4_500_items.txt", "pymoo\\dataset\\mood_val_dataset\\ref_dataset_4_500_items"),]
+        
             
-        for (algo_result_file, pareto_output_dir) in aco_results:
+        for (algo_result_file, pareto_output_dir) in val_aco_results:
             extraire_pareto_sets(algo_result_file, pareto_output_dir)
         
 
         #rendre les front de pareto produits par ACO négative
-
-        for seed in [1, 2, 3, 4, 5,6,7,8,9,10]:
-           for i in range(5):
-                                
-             pareto_file = f"pymoo\\dataset\\mood_train_dataset\\ref_dataset_{i}\\pareto_front_aco_seed_{seed}.txt"
-
-             make_negative_pareto(pareto_file)
-
-
-        print("\nTous les algorithmes ont été exécutés avec succès. concaténation des front de pareto...")
+        
+        for _,front_dir in val_aco_results:
+            for seed in [1,2,3,4,5,6,7,8,9,10]:
+            
+                pareto_file = f"pareto_front_aco_seed_{seed}.txt"
+                file=os.path.join(front_dir,pareto_file)
+                make_negative_pareto(file)
 
 
+        print("\nTous les algorithmes ont été exécutés avec succès. Concaténation des fronts de pareto...")
+        
+      
         for i in [0, 1, 2, 3, 4]:
                 
                     for algo in ["nsga2", "nsga3","aco"]:
                         for seed in [1, 2, 3, 4, 5,6,7,8,9,10]:
+                                for nb_items in [100,300,500]:
                                 
-                                pareto_file = f"pymoo\\dataset\\mood_train_dataset\\ref_dataset_{i}\\pareto_front_{algo}_seed_{seed}.txt"
-                                res_file = f"pymoo\\dataset\\mood_train_dataset\\ref_dataset_{i}\\final_pareto_file.txt"
-                                append_pareto_to_res(pareto_file, res_file)
+                                    pareto_file = f"pymoo\\dataset\\mood_val_dataset\\ref_dataset_{i}_{nb_items}_items\\pareto_front_{algo}_seed_{seed}.txt"
+                                    res_file = f"pymoo\\dataset\\mood_val_dataset\\ref_dataset_{i}_{nb_items}_items\\final_pareto_file.txt"
+                                    append_pareto_to_res(pareto_file, res_file)
 
         
 
@@ -372,26 +392,28 @@ if __name__ == "__main__":
 
 
         for i in [0, 1, 2, 3, 4]:
+                for nb_items in [100,300,500]:
             
-                res_file = f"pymoo\\dataset\\mood_train_dataset\\ref_dataset_{i}\\final_pareto_file.txt"
-                run_cmd = [
-                "./nondominated.exe",
-                "--union",
-                "--filter",
-                res_file]
-                print(f"Exécution : {' '.join(run_cmd)}")
-                
-                result = subprocess.run(run_cmd, cwd=WORK_DIR)  
-                
-                if result.returncode != 0:
-                    print(f"Erreur à l'exécution (code {result.returncode})")
-                    sys.exit(1)
+                    res_file = f"pymoo\\dataset\\mood_val_dataset\\ref_dataset_{i}_{nb_items}_items\\final_pareto_file.txt"
+                    run_cmd = [
+                    "./nondominated.exe",
+                    "--union",
+                    "--filter",
+                    res_file]
+                    print(f"Exécution : {' '.join(run_cmd)}")
+                    
+                    result = subprocess.run(run_cmd, cwd=WORK_DIR)  
+                    
+                    if result.returncode != 0:
+                        print(f"Erreur à l'exécution (code {result.returncode})")
+                        sys.exit(1)
 
         print("\nToutes les solutions non dominées ont été filtrées avec succès. Vérification  de la non-dominance des solutions filtrées...")
 
 
         for i in [0, 1, 2, 3, 4]:
-                res_file = f"pymoo\\dataset\\mood_train_dataset\\ref_dataset_{i}\\final_pareto_file.txt_dat"
+            for nb_items in [100,300,500]:
+                res_file = f"pymoo\\dataset\\mood_val_dataset\\ref_dataset_{i}_{nb_items}_items\\final_pareto_file.txt_dat"
                 run_cmd = [
                 "./nondominated.exe",
                 "--verbose",
@@ -402,7 +424,7 @@ if __name__ == "__main__":
                 
                 if result.returncode != 0:
                     print(f"Erreur à l'exécution (code {result.returncode})")
-                    sys.exit(1)"""
+                    sys.exit(1)
          
          
 
